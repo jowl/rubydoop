@@ -22,6 +22,10 @@ module Rubydoop
       double(:job_factory)
     end
 
+    let :calls do
+      []
+    end
+
     describe '#wait_for_completion' do
       context 'with one job' do
         before do
@@ -31,6 +35,8 @@ module Rubydoop
         let! :definition do
           described_class.new(context).tap do |definition|
             definition.job('spec') {}
+            definition.after { |res| calls << res }
+            definition.after { calls << :second }
           end
         end
 
@@ -41,6 +47,11 @@ module Rubydoop
         it 'delegates to the job' do
           result = definition.wait_for_completion(verbose = true)
           expect(result).to eq false
+        end
+
+        it 'calls #after callbacks' do
+          definition.wait_for_completion(verbose = true)
+          expect(calls).to eq [false, :second]
         end
       end
 
@@ -62,6 +73,8 @@ module Rubydoop
               definition.job('job0') {}
               definition.job('job1') {}
               definition.job('job2') {}
+              definition.after { |res| calls << res }
+              definition.after { calls << :second }
             end
           end
 
@@ -77,16 +90,30 @@ module Rubydoop
             expect(result).to eq true
           end
 
-          it 'returns false if any job returns false' do
-            allow(jobs[2]).to receive(:wait_for_completion).and_return(false)
-            result = definition.wait_for_completion(true)
-            expect(result).to eq false
+          it 'calls #after callbacks once' do
+            definition.wait_for_completion(verbose = true)
+            expect(calls).to eq [true, :second]
           end
 
-          it 'does not start subsequent jobs' do
-            allow(jobs[1]).to receive(:wait_for_completion).and_return(false)
-            expect(jobs[2]).to_not receive(:wait_for_completion)
-            definition.wait_for_completion(true)
+          context 'if any job returns false' do
+            before do
+              allow(jobs[1]).to receive(:wait_for_completion).and_return(false)
+            end
+
+            it 'returns false' do
+              result = definition.wait_for_completion(true)
+              expect(result).to eq false
+            end
+
+            it 'does not start subsequent jobs' do
+              expect(jobs[2]).to_not receive(:wait_for_completion)
+              definition.wait_for_completion(true)
+            end
+
+            it 'calls #after callbacks once' do
+              definition.wait_for_completion(verbose = true)
+              expect(calls).to eq [false, :second]
+            end
           end
         end
 
@@ -97,6 +124,8 @@ module Rubydoop
                 definition.job('job0') {}
                 definition.job('job1') {}
                 definition.job('job2') {}
+                definition.after { |res| calls << res }
+                definition.after { calls << :second }
               end
             end
           end
@@ -125,16 +154,30 @@ module Rubydoop
             expect(result).to eq true
           end
 
-          it 'returns false if any job returns false' do
-            allow(jobs[2]).to receive(:wait_for_completion).and_return(false)
-            result = definition.wait_for_completion(true)
-            expect(result).to eq false
+          it 'calls #after callbacks once' do
+            definition.wait_for_completion(verbose = true)
+            expect(calls).to eq [true, :second]
           end
 
-          it 'still waits for the completion of all jobs' do
-            allow(jobs[1]).to receive(:wait_for_completion).and_return(false)
-            expect(jobs[2]).to receive(:wait_for_completion)
-            definition.wait_for_completion(true)
+          context 'if any job returns false' do
+            before do
+              allow(jobs[1]).to receive(:wait_for_completion).and_return(false)
+            end
+
+            it 'returns false if any job returns false' do
+              result = definition.wait_for_completion(true)
+              expect(result).to eq false
+            end
+
+            it 'still waits for the completion of all jobs' do
+              expect(jobs[2]).to receive(:wait_for_completion)
+              definition.wait_for_completion(true)
+            end
+
+            it 'calls #after callbacks once' do
+              definition.wait_for_completion(verbose = true)
+              expect(calls).to eq [false, :second]
+            end
           end
         end
       end

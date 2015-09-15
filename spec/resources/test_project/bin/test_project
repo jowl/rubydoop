@@ -9,7 +9,7 @@ require 'openssl' # this just asserts that jruby-openssl was packaged correctly
 require 'word_count'
 require 'uniques'
 require 'lazy_output'
-
+require 'fileutils'
 
 Rubydoop.run do |input_path, output_path|
   parallel do
@@ -74,5 +74,9 @@ Rubydoop.run do |input_path, output_path|
 
     output_key Hadoop::Io::Text
     output_value Hadoop::Io::IntWritable
+  end
+
+  after do
+    FileUtils.touch("#{output_path}/after-callback")
   end
 end

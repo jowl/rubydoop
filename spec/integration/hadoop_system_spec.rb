@@ -48,6 +48,10 @@ describe 'Packaging and running a project' do
       File.read('data/log')
     end
 
+    it 'runs after-callbacks' do
+      expect(File).to exist('data/output/after-callback')
+    end
+
     context 'the word count job' do
       let :words do
         Hash[File.readlines('data/output/word_count-custom/part-r-00000').map { |line| k, v = line.split(/\s/); [k, v.to_i] }]

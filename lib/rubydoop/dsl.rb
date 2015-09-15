@@ -46,6 +46,7 @@ module Rubydoop
     # @private
     def initialize(context)
       @context = context
+      @after_callbacks = []
     end
 
     def job(name, &block)
@@ -63,7 +64,13 @@ module Rubydoop
     end
 
     def wait_for_completion(verbose)
-      @context.wait_for_completion(verbose)
+      success = @context.wait_for_completion(verbose)
+      @after_callbacks.each { |callback| callback.call(success) }
+      success
+    end
+
+    def after(&block)
+      @after_callbacks << block
     end
   end
 
