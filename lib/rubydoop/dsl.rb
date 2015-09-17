@@ -65,7 +65,7 @@ module Rubydoop
 
     def wait_for_completion(verbose)
       success = @context.wait_for_completion(verbose)
-      @after_callbacks.each { |callback| callback.call(success) }
+      @after_callbacks.each { |callback| callback.call(success) rescue nil }
       success
     end
 

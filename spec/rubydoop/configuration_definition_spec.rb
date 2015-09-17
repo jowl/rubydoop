@@ -53,6 +53,13 @@ module Rubydoop
           definition.wait_for_completion(verbose = true)
           expect(calls).to eq [false, :second]
         end
+
+        it 'calls all #after callbacks even if one fails' do
+          definition.after { raise }
+          definition.after { calls << :final }
+          definition.wait_for_completion(verbose = true)
+          expect(calls).to eq [false, :second, :final]
+        end
       end
 
       context 'with multiple jobs' do
