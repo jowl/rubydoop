@@ -65,12 +65,29 @@ module Rubydoop
 
     def wait_for_completion(verbose)
       success = @context.wait_for_completion(verbose)
-      @after_callbacks.each { |callback| callback.call(success) rescue nil }
+      run_result = RunResult.new(success)
+      @after_callbacks.each { |callback| callback.call(run_result) rescue nil }
       success
     end
 
     def after(&block)
       @after_callbacks << block
+    end
+  end
+
+  # The result of a `Rubydoop.run`
+  #
+  # Instances of this class are yielded in `after`, and contain
+  # information about how the run went.
+  #
+  class RunResult
+    # @private
+    def initialize(success)
+      @success = success
+    end
+
+    def success?
+      @success
     end
   end
 

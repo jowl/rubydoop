@@ -35,7 +35,7 @@ module Rubydoop
         let! :definition do
           described_class.new(context).tap do |definition|
             definition.job('spec') {}
-            definition.after { |res| calls << res }
+            definition.after { |res| calls << res.success? }
             definition.after { calls << :second }
           end
         end
@@ -49,7 +49,7 @@ module Rubydoop
           expect(result).to eq false
         end
 
-        it 'calls #after callbacks' do
+        it 'calls #after callbacks with RunResult' do
           definition.wait_for_completion(verbose = true)
           expect(calls).to eq [false, :second]
         end
@@ -80,7 +80,7 @@ module Rubydoop
               definition.job('job0') {}
               definition.job('job1') {}
               definition.job('job2') {}
-              definition.after { |res| calls << res }
+              definition.after { |res| calls << res.success? }
               definition.after { calls << :second }
             end
           end
@@ -131,7 +131,7 @@ module Rubydoop
                 definition.job('job0') {}
                 definition.job('job1') {}
                 definition.job('job2') {}
-                definition.after { |res| calls << res }
+                definition.after { |res| calls << res.success? }
                 definition.after { calls << :second }
               end
             end
