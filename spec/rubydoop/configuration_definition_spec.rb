@@ -36,7 +36,7 @@ module Rubydoop
           described_class.new(context).tap do |definition|
             definition.job('spec') {}
             definition.after { |res| calls << res.success? }
-            definition.after { calls << :second }
+            definition.after { |res| calls << res.jobs }
           end
         end
 
@@ -51,14 +51,14 @@ module Rubydoop
 
         it 'calls #after callbacks with RunResult' do
           definition.wait_for_completion(verbose = true)
-          expect(calls).to eq [false, :second]
+          expect(calls).to eq [false, [job]]
         end
 
         it 'calls all #after callbacks even if one fails' do
           definition.after { raise }
           definition.after { calls << :final }
           definition.wait_for_completion(verbose = true)
-          expect(calls).to eq [false, :second, :final]
+          expect(calls).to eq [false, [job], :final]
         end
       end
 
@@ -81,7 +81,7 @@ module Rubydoop
               definition.job('job1') {}
               definition.job('job2') {}
               definition.after { |res| calls << res.success? }
-              definition.after { calls << :second }
+              definition.after { |res| calls << res.jobs }
             end
           end
 
@@ -99,7 +99,7 @@ module Rubydoop
 
           it 'calls #after callbacks once' do
             definition.wait_for_completion(verbose = true)
-            expect(calls).to eq [true, :second]
+            expect(calls).to eq [true, jobs]
           end
 
           context 'if any job returns false' do
@@ -119,7 +119,7 @@ module Rubydoop
 
             it 'calls #after callbacks once' do
               definition.wait_for_completion(verbose = true)
-              expect(calls).to eq [false, :second]
+              expect(calls).to eq [false, jobs]
             end
           end
         end
@@ -132,7 +132,7 @@ module Rubydoop
                 definition.job('job1') {}
                 definition.job('job2') {}
                 definition.after { |res| calls << res.success? }
-                definition.after { calls << :second }
+                definition.after { |res| calls << res.jobs }
               end
             end
           end
@@ -163,7 +163,7 @@ module Rubydoop
 
           it 'calls #after callbacks once' do
             definition.wait_for_completion(verbose = true)
-            expect(calls).to eq [true, :second]
+            expect(calls).to eq [true, jobs]
           end
 
           context 'if any job returns false' do
@@ -183,7 +183,7 @@ module Rubydoop
 
             it 'calls #after callbacks once' do
               definition.wait_for_completion(verbose = true)
-              expect(calls).to eq [false, :second]
+              expect(calls).to eq [false, jobs]
             end
           end
         end

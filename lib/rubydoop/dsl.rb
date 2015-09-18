@@ -65,7 +65,7 @@ module Rubydoop
 
     def wait_for_completion(verbose)
       success = @context.wait_for_completion(verbose)
-      run_result = RunResult.new(success)
+      run_result = RunResult.new(success, @context.jobs)
       @after_callbacks.each { |callback| callback.call(run_result) rescue nil }
       success
     end
@@ -81,9 +81,11 @@ module Rubydoop
   # information about how the run went.
   #
   class RunResult
+    attr_reader :jobs
     # @private
-    def initialize(success)
+    def initialize(success, jobs)
       @success = success
+      @jobs = jobs
     end
 
     def success?
@@ -389,14 +391,17 @@ module Rubydoop
 
   # @private
   class Context
+    attr_reader :jobs
     def initialize(conf)
       @conf = conf
       @job_stack = [Jobs::Sequence.new]
+      @jobs = []
     end
 
     def create_job(name)
       hadoop_job = Hadoop::Mapreduce::Job.new(@conf, name)
       @job_stack.last.add(hadoop_job)
+      @jobs << hadoop_job
       hadoop_job
     end
 
